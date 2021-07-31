@@ -11,37 +11,30 @@
             </div>
         </div>
     </div> -->
-    <div class="container" v-if="dateShow == true">
-        <h2>{{Name}}, Select a Date for your vaccination!</h2>
+    <div class="container" v-if="locationShow == true">
+        <h2>{{Name}}, Select a vaccination site!</h2>
         <div class="search-divider" />
-        <div class="input-group was-validated">
-            <select class="form-select" required v-model="date">
-                <option selected disabled value="">Available Date</option>
-                <option >One</option>
-                <option >Two</option>
-                <option >Three</option>
-            </select>
-            <div class="invalid-feedback">Please select a valid state.</div>
-            <div class="valid-feedback" id="dateValid">Looks good!</div>
-            <div class="col-12">
-                <button class="btn btn-primary" @click="verifyDate">Next</button>
-            </div>
+        <div class="input-group was-validated form-group">
+            <b-form-select v-model="location" :options="locationOption" :state="locationValidation"></b-form-select>
+            <b-form-invalid-feedback :state="locationValidation" id="locationValid">Please select a valid location.</b-form-invalid-feedback>
+        </div>
+        <div class="col-12">
+            <button class="btn btn-primary" @click="verifyLocation">Next</button>
         </div>
     </div>
-    <div class="container" v-if="locationShow == true">
-        <h2>{{Name}}, Select a vaccination site and time!</h2>
+    <div class="container" v-if="dateShow == true">
+        <h2>Select a Date  and time for your vaccination!</h2>
         <div class="search-divider" />
         <div class="input-group was-validated">
-            <select class="form-select" required v-model="location">
-                <option selected disabled value="">Available Location</option>
-                <option value="1">One</option>
-                <option value="2">Two</option>
-                <option value="3">Three</option>
-            </select>
-            <div class="invalid-feedback">Please select a valid location.</div>
-            <div class="valid-feedback" id="locationValid">Looks good!</div>
+            <b-form-select v-model="date" :options="dateOption" :state="dateValidation" style="width:100%;"></b-form-select>
+            <b-form-invalid-feedback :state="dateValidation" id="dateValid">Please select a valid Date.</b-form-invalid-feedback>
+            <b-form-group>
+                <h6>When do you want to get your vaccine?</h6>
+                <b-form-radio v-model="time" name="some-radios" value="0">Morning</b-form-radio>
+                <b-form-radio v-model="time" name="some-radios" value="1">Afternoon</b-form-radio>
+            </b-form-group>
             <div class="col-12">
-                <button class="btn btn-primary" @click="verifyLocation">Next</button>
+                <button class="btn btn-primary" @click="verifyDate">Next</button>
             </div>
         </div>
     </div>
@@ -92,7 +85,7 @@
                             <h6 class="mb-0">Time</h6>
                         </div>
                         <div class="col-sm-8 text-secondary">
-                            placeholder
+                            {{timeStr}}
                         </div>
                     </div>                  
             </div>
@@ -103,7 +96,7 @@
         </div>
     </div> 
     <b-modal id="reset-modal" title="Submission" @ok="reset">
-        <p class="my-4">Are you information will be processed by the administrator, Thank you!</p>
+        <p class="my-4">Your information will be processed by the health administrator, Thank you!</p>
     </b-modal>
 </div>    
 </template>
@@ -111,21 +104,39 @@
 import $ from 'jquery'
 import { getUserName } from '../service/user'
 import { getUserSSN } from  '../service/user'
+import { getLocation } from '../service/reservation'
+import { getDate } from '../service/reservation'
+import { makeReservation } from '../service/reservation'
 export default {
     data() {
         return{
             Name:"",
             date:"",
-            dateShow: true,
+            time:"",
+            timeStr:"Morning",
+            dateShow: false,
             location: "",
-            locationShow: false,
+            locationShow: true,
             finalReportShow: false,
             SSN:"",
+            locationOption: [],
+            dateOption: [],
+            dateData:[]
+        }
+    },
+    computed: {
+        locationValidation() {
+            return this.location != "";
+        },
+        dateValidation() {
+            return this.date != "";
         }
     },
     async mounted() {
-        const { data } = await getUserName();
+        var { data } = await getUserName();
         this.Name = data;
+        var res = (await getLocation()).data;
+        this.locationOption = res;
     },
     methods: {
         makeToast(variant = null, content = 'default message') {
@@ -136,46 +147,66 @@ export default {
             solid: true
             })
         },
-        verifyDate() {
+        async verifyDate() {
             let display = $("#dateValid").css("display");
-            if (display == 'none') {
+            if (display != 'none') {
                 this.makeToast('danger','Date Field Invliad');
                 return;
             }
             else {
+                const { data } = await getUserSSN();
+                this.SSN = data;
+                if (this.time == 1) {
+                    this.timeStr = "Afternoon";
+                }
                 this.dateShow = false;
-                this.locationShow = true;
+                this.finalReportShow = true;
                 return;
             }
         },
         async verifyLocation() {
             let display = $("#locationValid").css("display");
-            if (display == 'none') {
+            if (display != 'none') {
                 this.makeToast('danger','Location Field Invliad');
                 return;
             }
             else {
-                //before going to the next page, we should generate the SSN
-                const { data } = await getUserSSN();
-                this.SSN = data;
+                //before going to the next page, we should generate all the date and spots
+                const { data } = await getDate(this.location);
+                this.dateData = data;
+                this.dateOption = data.map(function(a) {return a.date;});
                 this.locationShow = false;
-                this.finalReportShow = true;
+                this.dateShow = true;
                 return;
             }
         },
         modal_invoke() {
             this.$bvModal.show("reset-modal");
         },
-        reset(){
-            this.Name = "";
-            this.date = "";
-            this.dateShow = true;
-            this.location = "";
-            this.locationShow = false;
-            this.finalReportShow = false;
-            this.SSN = "";
-            this.$router.push({ name:'home' });
-
+        async reset(){
+            const{ resultCode } = await makeReservation({
+                "userSsn":this.SSN,
+                "locationName":this.location,
+                "date":this.date,
+                "time":this.time
+            })
+            console.log(resultCode);
+            if (resultCode == 200) {
+                this.Name = "";
+                this.date = "";
+                this.dateShow = true;
+                this.location = "";
+                this.locationShow = false;
+                this.finalReportShow = false;
+                this.SSN = "";
+                this.locationOption = [];
+                this.dateOption = [];
+                this.dateData = [];
+                this.time = "";
+                this.timeStr = "Morning";
+                this.$router.push({ name:'home' });
+            }
+            return;
         }
 
     }
