@@ -9,7 +9,7 @@
                 <li class="nav-item"><router-link to="/home" class="text-light"><i class="fa fa-tachometer" aria-hidden="true"></i><span>Dashboard</span></router-link></li>
                 <li class="nav-item"><router-link to="/home/selfCheck" class="text-light"><i class="fa fa-address-card" aria-hidden="true"></i><span>Your Health Code</span></router-link></li>
                 <li class="nav-item"><router-link to="/home/checkOther" class="text-light"><i class="fa fa-handshake-o" aria-hidden="true"></i><span>Health Code Search</span></router-link></li>
-                <li class="nav-item"><router-link :to="{ name:'home' }" class="text-light"><i class="fa fa-registered" aria-hidden="true"></i><span>Vaccination</span></router-link></li>
+                <li class="nav-item"><router-link to="/home/reservation" class="text-light"><i class="fa fa-registered" aria-hidden="true"></i><span>Vaccination</span></router-link></li>
                 <li class="nav-item"><a class="text-light" style="cursor:pointer;" @click="triggerModal"><i class="fa fa-sign-out" aria-hidden="true"></i><span>Log out</span></a></li>
             </ul>
         </div>

@@ -50,7 +50,7 @@ export default {
     
 }
 </script>
-<style scoped>
+<style>
 .btn-primary {
     background-color: #4e73df;
 }

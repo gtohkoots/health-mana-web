@@ -19,6 +19,11 @@ export function getUserName() {
     return axios.get("/user/currentUserName");
 }
 
+//UserSSN
+export function getUserSSN() {
+    return axios.get("/user/currentUserssn");
+}
+
 //selfCheck
 export function selfCheck(param) {
     return axios.post("/user/selfCheck", param);

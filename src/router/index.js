@@ -4,6 +4,7 @@ import Home from '../views/Home.vue'
 import Login from '../views/Login.vue'
 import UserProfile from '../components/UserProfile.vue'
 import OtherProfile from '../components/OtherProfile.vue'
+import Reservation from '../components/Reservation.vue'
 
 Vue.use(VueRouter)
 
@@ -19,7 +20,8 @@ const routes = [
     component: Home,
     children: [
       { path:'selfCheck', component: UserProfile },
-      { path:'checkOther', component: OtherProfile }
+      { path:'checkOther', component: OtherProfile },
+      { path:'reservation', component: Reservation }
     ]
   }
 ]
